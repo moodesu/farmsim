@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0f1710">
+  <title>Hardcore Farm Planner</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">HF</div>
+        <div>
+          <strong>Hardcore Farm</strong>
+          <span>FS25 Co-op Planner</span>
+        </div>
+      </div>
+
+      <nav id="nav">
+        <button class="nav-btn active" data-view="dashboard">Dashboard</button>
+        <button class="nav-btn" data-view="planner">Session Planner</button>
+        <button class="nav-btn" data-view="fields">Fields</button>
+        <button class="nav-btn" data-view="machines">Machinery</button>
+        <button class="nav-btn" data-view="finance">Finance</button>
+        <button class="nav-btn" data-view="progression">Progression</button>
+        <button class="nav-btn" data-view="rules">Ruleset</button>
+      </nav>
+
+      <div class="sidebar-foot">
+        <span>No Ones Land 4X</span>
+        <small>3-player shared survival farm</small>
+      </div>
+    </aside>
+
+    <main>
+      <header class="topbar">
+        <div>
+          <h1 id="page-title">Dashboard</h1>
+          <p id="page-subtitle">Shared farm status and current objective.</p>
+        </div>
+        <div class="top-actions">
+          <button id="export-btn" class="ghost-btn">Export data</button>
+          <label class="import-btn">Import data<input id="import-file" type="file" accept=".json"></label>
+        </div>
+      </header>
+
+      <section id="dashboard" class="view active">
+        <div class="stats-grid">
+          <article class="stat-card">
+            <span>Cash</span>
+            <strong id="dash-cash">$1,000</strong>
+            <small>Shared farm balance</small>
+          </article>
+          <article class="stat-card">
+            <span>Debt</span>
+            <strong id="dash-debt">$0</strong>
+            <small id="dash-loan-limit">Loans locked</small>
+          </article>
+          <article class="stat-card">
+            <span>Farm value</span>
+            <strong id="dash-value">$1,000</strong>
+            <small>Manual estimate</small>
+          </article>
+          <article class="stat-card">
+            <span>Current stage</span>
+            <strong id="dash-stage">Stage 0</strong>
+            <small id="dash-stage-name">Broke</small>
+          </article>
+        </div>
+
+        <div class="dashboard-grid">
+          <article class="panel objective-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="eyebrow">Current objective</span>
+                <h2 id="objective-name">Build first land fund</h2>
+              </div>
+              <button class="small-btn" data-view-jump="progression">View progression</button>
+            </div>
+            <div class="progress-track"><div id="objective-progress" class="progress-fill"></div></div>
+            <div class="progress-copy">
+              <span id="objective-copy">$1,000 / target not set</span>
+              <span id="objective-percent">0%</span>
+            </div>
+            <p class="muted">First land may only be purchased if at least $10,000 remains afterwards.</p>
+          </article>
+
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <span class="eyebrow">Players</span>
+                <h2>Tonight's crew</h2>
+              </div>
+            </div>
+            <div id="player-list" class="player-list"></div>
+          </article>
+
+          <article class="panel wide">
+            <div class="panel-heading">
+              <div>
+                <span class="eyebrow">Session</span>
+                <h2>Priority work</h2>
+              </div>
+              <button class="small-btn" data-view-jump="planner">Open planner</button>
+            </div>
+            <div id="dashboard-tasks" class="task-list"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <span class="eyebrow">Next purchase</span>
+                <h2 id="next-purchase-title">Nothing planned</h2>
+              </div>
+            </div>
+            <div id="next-purchase-body" class="purchase-summary"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <span class="eyebrow">Farm status</span>
+                <h2>Quick counts</h2>
+              </div>
+            </div>
+            <div class="quick-grid">
+              <div><strong id="count-fields">0</strong><span>Fields</span></div>
+              <div><strong id="count-machines">0</strong><span>Machines</span></div>
+              <div><strong id="count-tasks">0</strong><span>Open tasks</span></div>
+              <div><strong id="count-purchases">0</strong><span>Wishlist</span></div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="planner" class="view">
+        <div class="two-col">
+          <article class="panel">
+            <span class="eyebrow">New task</span>
+            <h2>Add session work</h2>
+            <form id="task-form" class="form-grid">
+              <label>Task<input name="title" required maxlength="80" placeholder="e.g. Finish fertilising contract"></label>
+              <label>Player<select name="player"><option>Don</option><option>Mdgi</option><option>Zakk</option><option>All</option></select></label>
+              <label>Priority<select name="priority"><option>High</option><option selected>Medium</option><option>Low</option></select></label>
+              <label>Status<select name="status"><option>Backlog</option><option selected>Ready</option><option>In Progress</option><option>Done</option></select></label>
+              <label class="full">Notes<input name="notes" maxlength="140" placeholder="Machine, field, weather dependency..."></label>
+              <button class="primary-btn full" type="submit">Add task</button>
+            </form>
+          </article>
+
+          <article class="panel">
+            <span class="eyebrow">Session setup</span>
+            <h2>Current game session</h2>
+            <form id="session-form" class="form-grid">
+              <label>Game month<input name="month" placeholder="September"></label>
+              <label>Year<input name="year" type="number" min="1" max="99" value="1"></label>
+              <label>Day<input name="day" type="number" min="1" max="3" value="1"></label>
+              <label>Timescale<select name="timescale"><option>1x</option><option selected>5x</option><option>10x</option><option>15x</option></select></label>
+              <label class="full">Primary objective<input name="objective" placeholder="Earn enough for first parcel + $10k reserve"></label>
+              <button class="primary-btn full" type="submit">Save session</button>
+            </form>
+          </article>
+        </div>
+
+        <article class="panel">
+          <div class="panel-heading">
+            <div>
+              <span class="eyebrow">Work board</span>
+              <h2>Session tasks</h2>
+            </div>
+            <button id="clear-done-btn" class="small-btn">Clear completed</button>
+          </div>
+          <div class="board" id="task-board"></div>
+        </article>
+      </section>
+
+      <section id="fields" class="view">
+        <article class="panel">
+          <div class="panel-heading">
+            <div>
+              <span class="eyebrow">Land management</span>
+              <h2>Fields & parcels</h2>
+            </div>
+          </div>
+          <form id="field-form" class="inline-form">
+            <input name="name" required placeholder="Field / parcel name">
+            <input name="crop" placeholder="Crop / use">
+            <select name="state">
+              <option>Planned</option><option>Clearing</option><option>Ploughed</option><option>Seeded</option><option>Growing</option><option>Ready to harvest</option><option>Harvested</option>
+            </select>
+            <input name="next" placeholder="Next operation">
+            <button class="primary-btn" type="submit">Add</button>
+          </form>
+          <div id="fields-table" class="data-list"></div>
+        </article>
+      </section>
+
+      <section id="machines" class="view">
+        <div class="two-col">
+          <article class="panel">
+            <span class="eyebrow">Fleet</span>
+            <h2>Owned & leased machinery</h2>
+            <form id="machine-form" class="form-grid">
+              <label>Name<input name="name" required placeholder="e.g. Deutz-Fahr DX 6.31"></label>
+              <label>Type<input name="type" placeholder="Tractor"></label>
+              <label>Ownership<select name="ownership"><option>Owned</option><option>Leased</option></select></label>
+              <label>Value<input name="value" type="number" min="0" step="100" value="0"></label>
+              <button class="primary-btn full" type="submit">Add machine</button>
+            </form>
+          </article>
+
+          <article class="panel">
+            <span class="eyebrow">Wishlist</span>
+            <h2>Planned purchases</h2>
+            <form id="purchase-form" class="form-grid">
+              <label>Item<input name="name" required placeholder="Used tractor"></label>
+              <label>Target price<input name="price" type="number" min="0" step="100" required></label>
+              <label>Priority<select name="priority"><option>Critical</option><option>High</option><option selected>Medium</option><option>Low</option></select></label>
+              <label>Reason<input name="reason" placeholder="First fieldwork tractor"></label>
+              <button class="primary-btn full" type="submit">Add wishlist item</button>
+            </form>
+          </article>
+        </div>
+
+        <div class="two-col">
+          <article class="panel"><h2>Fleet</h2><div id="machine-list" class="data-list"></div></article>
+          <article class="panel"><h2>Purchase wishlist</h2><div id="purchase-list" class="data-list"></div></article>
+        </div>
+      </section>
+
+      <section id="finance" class="view">
+        <div class="stats-grid finance-stats">
+          <article class="stat-card"><span>Cash</span><strong id="finance-cash">$1,000</strong></article>
+          <article class="stat-card"><span>Debt</span><strong id="finance-debt">$0</strong></article>
+          <article class="stat-card"><span>Farm value</span><strong id="finance-value">$1,000</strong></article>
+          <article class="stat-card"><span>Spendable cash</span><strong id="finance-spendable">$0</strong><small>$10k reserve applied once land is owned</small></article>
+        </div>
+
+        <div class="two-col">
+          <article class="panel">
+            <span class="eyebrow">Update balances</span>
+            <h2>Farm finances</h2>
+            <form id="balance-form" class="form-grid">
+              <label>Cash<input name="cash" type="number" min="0" step="100"></label>
+              <label>Debt<input name="debt" type="number" min="0" step="100"></label>
+              <label>Farm value<input name="farmValue" type="number" min="0" step="100"></label>
+              <label>Land owned?<select name="landOwned"><option value="false">No</option><option value="true">Yes</option></select></label>
+              <button class="primary-btn full" type="submit">Save balances</button>
+            </form>
+          </article>
+
+          <article class="panel">
+            <span class="eyebrow">Transaction</span>
+            <h2>Add income / expense</h2>
+            <form id="transaction-form" class="form-grid">
+              <label>Description<input name="description" required placeholder="Contract - harvest"></label>
+              <label>Amount<input name="amount" type="number" step="100" required placeholder="15000 or -2500"></label>
+              <label>Category<select name="category"><option>Contract</option><option>Crop sale</option><option>Forestry</option><option>Machinery</option><option>Land</option><option>Supplies</option><option>Repair</option><option>Other</option></select></label>
+              <button class="primary-btn full" type="submit">Add transaction</button>
+            </form>
+          </article>
+        </div>
+
+        <article class="panel">
+          <div class="panel-heading"><div><span class="eyebrow">Ledger</span><h2>Recent transactions</h2></div></div>
+          <div id="transaction-list" class="data-list"></div>
+        </article>
+      </section>
+
+      <section id="progression" class="view">
+        <article class="panel">
+          <span class="eyebrow">Campaign</span>
+          <h2>Hardcore progression</h2>
+          <div id="stage-list" class="stage-list"></div>
+        </article>
+      </section>
+
+      <section id="rules" class="view">
+        <article class="panel rules-panel">
+          <span class="eyebrow">Official house rules</span>
+          <h2>3-player Hardcore Co-op Ruleset</h2>
+
+          <div class="rule-section">
+            <h3>Starting conditions</h3>
+            <ul>
+              <li>One shared farm for Don, Mdgi and Zakk.</li>
+              <li>$1,000 total starting cash.</li>
+              <li>No land, vehicles, buildings, livestock or productions.</li>
+              <li>Delete or sell all map-provided starter equipment, then correct the balance back to $1,000.</li>
+              <li>No starting loan.</li>
+              <li>Map target: No Ones Land 4X.</li>
+            </ul>
+          </div>
+
+          <div class="rule-section">
+            <h3>Game settings</h3>
+            <ul>
+              <li>Hard economy; seasonal growth on.</li>
+              <li>3-day months; 5x normal timescale.</li>
+              <li>Crop destruction, weeds, lime, periodic ploughing and fieldstones on.</li>
+              <li>High fuel usage, vehicle damage and trailer fill limit on.</li>
+              <li>1x allowed during busy fieldwork; up to 15x when genuinely waiting.</li>
+              <li>Sleeping allowed. Do not accelerate specifically to avoid weather or poor prices.</li>
+            </ul>
+          </div>
+
+          <div class="rule-section">
+            <h3>Stage 0 — Broke</h3>
+            <ul>
+              <li>Contracts and contract-supplied equipment are allowed.</li>
+              <li>Maximum two simultaneous contracts.</li>
+              <li>Contract machinery may only be used for its contract.</li>
+              <li>No normal leasing, loans, passive income, subsidies, productions or animals.</li>
+              <li>First land may only be purchased if at least $10,000 remains after purchase.</li>
+            </ul>
+          </div>
+
+          <div class="rule-section">
+            <h3>Stage 1 — Homestead</h3>
+            <ul>
+              <li>Begins when the first parcel is purchased.</li>
+              <li>Buying machinery is allowed; used equipment should be preferred.</li>
+              <li>Normal equipment leasing remains locked.</li>
+              <li>Maximum one external contract at a time after land purchase.</li>
+            </ul>
+          </div>
+
+          <div class="rule-section">
+            <h3>Stage 2 — Working Farm</h3>
+            <ul>
+              <li>Unlock at $150,000 farm value, with owned land, one tractor, one own field and one completed harvest.</li>
+              <li>Equipment leasing unlocked.</li>
+              <li>Loans unlocked, capped at 25% of farm asset value.</li>
+              <li>Prefer buying ordinary implements; lease primarily high-cost specialist equipment.</li>
+            </ul>
+          </div>
+
+          <div class="rule-section">
+            <h3>Stage 3 — Established Farm</h3>
+            <ul>
+              <li>Unlock at $350,000 farm value.</li>
+              <li>Livestock, specialist crops, silage and basic productions unlocked.</li>
+              <li>Additional land and larger machinery encouraged.</li>
+            </ul>
+          </div>
+
+          <div class="rule-section">
+            <h3>Stage 4 — Agribusiness</h3>
+            <ul>
+              <li>Unlock at $750,000 farm value.</li>
+              <li>Major productions, large livestock operations, extensive leasing and large-scale expansion unlocked.</li>
+            </ul>
+          </div>
+
+          <div class="rule-section">
+            <h3>Integrity rules</h3>
+            <ul>
+              <li>No government subsidy or equivalent passive-income cheats.</li>
+              <li>No teleport/resetting vehicles unless genuinely bugged.</li>
+              <li>Recover rolled, stuck or stranded equipment normally.</li>
+              <li>No exploitative leasing loops or abusing contract machinery.</li>
+              <li>Used machinery takes priority when a sensible equivalent is available.</li>
+              <li>Precision Farming becomes compulsory from Year 2 if installed.</li>
+            </ul>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
