@@ -8,7 +8,8 @@ Players:
 - Zakk
 
 Default campaign:
-- No Ones Land 4X
+- New Frontier
+- Blank-slate co-op start: no free pre-built farm assets
 - One shared farm
 - $1,000 total starting cash
 - No land, vehicles, buildings, livestock or loans
