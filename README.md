@@ -23,6 +23,7 @@ Default campaign:
 - Session task board
 - Player assignment
 - Field / parcel tracking
+- Crop calendar and seasonal crop planner
 - Machinery inventory
 - Purchase wishlist
 - Farm finance ledger
@@ -53,3 +54,8 @@ v1 stores data only in the current browser's localStorage.
 Use **Export data** to save a JSON backup and **Import data** to move it between browsers.
 
 For true shared live data between Don, Mdgi and Zakk, the next step is Supabase authentication + realtime database storage.
+
+
+## v4 crop recommender
+
+The Crop Planner now ranks crops by selected month and goal (low cost, quick cash, or long-term value), while factoring in campaign stage and machinery recorded in the app. It remains fully static and uses browser localStorage.

@@ -22,6 +22,7 @@
         <button class="nav-btn active" data-view="dashboard">Dashboard</button>
         <button class="nav-btn" data-view="planner">Session Planner</button>
         <button class="nav-btn" data-view="fields">Fields</button>
+        <button class="nav-btn" data-view="crops">Crop Planner</button>
         <button class="nav-btn" data-view="machines">Machinery</button>
         <button class="nav-btn" data-view="finance">Finance</button>
         <button class="nav-btn" data-view="progression">Progression</button>
@@ -195,6 +196,77 @@
           </form>
           <div id="fields-table" class="data-list"></div>
         </article>
+      </section>
+
+
+      <section id="crops" class="view">
+        <article class="panel crop-recommender">
+          <div class="panel-heading">
+            <div>
+              <span class="eyebrow">Crop decision tool</span>
+              <h2>What should we plant?</h2>
+              <p class="muted">Choose the game month and goal. Recommendations are ranked using the New Frontier crop calendar, your current campaign stage, and machinery recorded in the planner.</p>
+            </div>
+          </div>
+          <form id="crop-recommend-form" class="recommend-form">
+            <label>Current month
+              <select id="crop-current-month" name="month">
+                <option>March</option><option>April</option><option>May</option><option>June</option><option>July</option><option>August</option>
+                <option>September</option><option>October</option><option>November</option><option>December</option><option>January</option><option>February</option>
+              </select>
+            </label>
+            <label>Goal
+              <select id="crop-goal" name="goal">
+                <option value="lowCost">Low cost / simple equipment</option>
+                <option value="quickCash">Quickest route to harvest</option>
+                <option value="longTerm">Best long-term opportunity</option>
+              </select>
+            </label>
+            <button class="primary-btn" type="submit">Recommend crops</button>
+          </form>
+          <div id="crop-recommend-summary" class="recommend-summary"></div>
+          <div id="crop-recommend-results" class="recommend-results"></div>
+        </article>
+
+        <div class="crop-now-grid">
+          <article class="panel">
+            <span class="eyebrow">Plant now</span>
+            <h2 id="plant-now-title">—</h2>
+            <div id="plant-now" class="chip-list"></div>
+          </article>
+          <article class="panel">
+            <span class="eyebrow">Harvest now</span>
+            <h2 id="harvest-now-title">—</h2>
+            <div id="harvest-now" class="chip-list"></div>
+          </article>
+        </div>
+
+        <article class="panel crop-calendar-panel">
+          <div class="panel-heading compact-heading"><div><span class="eyebrow">Reference</span><h2>New Frontier crop calendar</h2></div></div>
+          <div class="calendar-legend"><span><i class="legend-swatch plant"></i> Planting season</span><span><i class="legend-swatch harvest"></i> Harvest season</span><span><i class="legend-swatch current"></i> Current month</span></div>
+          <div class="crop-calendar-wrap">
+            <div id="crop-calendar" class="crop-calendar"></div>
+          </div>
+        </article>
+
+        <div class="two-col crop-plan-layout">
+          <article class="panel">
+            <span class="eyebrow">Farm crop plan</span>
+            <h2>Add planned operation</h2>
+            <form id="crop-plan-form" class="form-grid">
+              <label>Field / parcel<input name="field" required placeholder="e.g. Field 1"></label>
+              <label>Crop<select name="crop" id="crop-plan-crop"></select></label>
+              <label>Operation<select name="operation"><option>Plant</option><option>Harvest</option><option>Prepare</option></select></label>
+              <label>Target month<select name="month"><option>March</option><option>April</option><option>May</option><option>June</option><option>July</option><option>August</option><option>September</option><option>October</option><option>November</option><option>December</option><option>January</option><option>February</option></select></label>
+              <label class="full">Notes<input name="notes" maxlength="140" placeholder="Seed required, machine dependency, contract timing..."></label>
+              <button class="primary-btn full" type="submit">Add crop plan</button>
+            </form>
+          </article>
+          <article class="panel">
+            <div class="panel-heading"><div><span class="eyebrow">Upcoming</span><h2>Planned crop operations</h2></div></div>
+            <div id="crop-plan-list" class="data-list"></div>
+          </article>
+        </div>
       </section>
 
       <section id="machines" class="view">

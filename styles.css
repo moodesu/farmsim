@@ -101,6 +101,39 @@ input,select { width:100%; border:1px solid var(--line); background:#0e140f; col
 .rule-section { border-top:1px solid var(--line); padding-top:18px; margin-top:18px; }
 .rule-section ul { color:#d6ddd5; padding-left:20px; line-height:1.65; }
 .empty { color:var(--muted); padding:18px 0; }
+
+.crop-toolbar { display:flex; justify-content:space-between; gap:18px; align-items:flex-end; margin-bottom:14px; }
+.crop-toolbar > div { min-width:0; }
+.crop-toolbar label { min-width:190px; }
+.crop-now-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin-bottom:14px; }
+.chip-list { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; min-height:30px; }
+.crop-chip { border-radius:999px; padding:6px 10px; font-size:.78rem; font-weight:750; border:1px solid var(--line); }
+.crop-chip.plant { background:rgba(149,173,63,.16); color:#dcec93; border-color:#61712f; }
+.crop-chip.harvest { background:rgba(211,91,20,.14); color:#ffc093; border-color:#75411f; }
+.crop-calendar-panel { padding:18px; margin-bottom:14px; }
+.calendar-legend { display:flex; flex-wrap:wrap; gap:16px; justify-content:flex-end; color:var(--muted); font-size:.76rem; margin-bottom:12px; }
+.calendar-legend span { display:flex; align-items:center; gap:7px; }
+.legend-swatch { width:18px; height:9px; border-radius:3px; display:inline-block; }
+.legend-swatch.plant { background:#82a900; }
+.legend-swatch.harvest { background:#d35b14; }
+.legend-swatch.current { background:transparent; border:2px solid var(--accent); height:13px; }
+.crop-calendar-wrap { overflow-x:auto; padding-bottom:4px; }
+.crop-calendar { min-width:980px; display:grid; grid-template-columns:160px repeat(12,minmax(64px,1fr)); border-top:1px solid var(--line); border-left:1px solid var(--line); }
+.crop-cell { min-height:42px; border-right:1px solid var(--line); border-bottom:1px solid var(--line); background:#111712; position:relative; display:flex; align-items:center; }
+.crop-name { padding:0 12px; font-weight:750; background:#151d16; position:sticky; left:0; z-index:2; }
+.crop-name.head { z-index:4; color:var(--muted); }
+.month-head { justify-content:center; color:var(--muted); font-size:.76rem; font-weight:800; background:#151d16; }
+.season-cell { justify-content:center; gap:3px; padding:4px; }
+.season-cell.plant { background:rgba(130,169,0,.08); }
+.season-cell.harvest { background:rgba(211,91,20,.07); }
+.current-month { box-shadow:inset 2px 0 0 var(--accent), inset -2px 0 0 var(--accent); }
+.month-head.current-month { color:var(--text); background:#20291d; }
+.season-mark { display:block; width:78%; height:10px; border-radius:999px; position:absolute; left:11%; }
+.plant-mark { background:#82a900; top:9px; }
+.harvest-mark { background:#d35b14; bottom:9px; }
+.season-cell.plant:not(.harvest) .plant-mark, .season-cell.harvest:not(.plant) .harvest-mark { top:auto; bottom:auto; position:relative; left:auto; }
+.crop-plan-layout { align-items:start; }
+
 @media (max-width: 980px) {
   .app-shell { grid-template-columns:1fr; }
   .sidebar { position:static; height:auto; border-right:0; border-bottom:1px solid var(--line); }
@@ -108,6 +141,8 @@ input,select { width:100%; border:1px solid var(--line); background:#0e140f; col
   .nav-btn { min-width:max-content; }
   .sidebar-foot { display:none; }
   .stats-grid { grid-template-columns:repeat(2,1fr); }
+  .crop-toolbar { align-items:stretch; flex-direction:column; }
+  .crop-toolbar label { min-width:0; }
   .dashboard-grid { grid-template-columns:1fr; }
   .panel.wide { grid-column:auto; }
   .board { grid-template-columns:repeat(2,1fr); }
@@ -116,10 +151,36 @@ input,select { width:100%; border:1px solid var(--line); background:#0e140f; col
   main { padding:20px 14px 50px; }
   .sidebar { padding:16px 14px; gap:16px; }
   .topbar { flex-direction:column; }
-  .stats-grid,.two-col,.form-grid,.board { grid-template-columns:1fr; }
+  .stats-grid,.two-col,.form-grid,.board,.crop-now-grid { grid-template-columns:1fr; }
   .full { grid-column:auto; }
   .inline-form { grid-template-columns:1fr; }
   .task-row,.data-row { align-items:flex-start; flex-direction:column; }
   .top-actions { width:100%; }
   .top-actions > * { flex:1; text-align:center; }
+}
+
+/* Dynamic crop recommender */
+.crop-recommender { margin-bottom:14px; }
+.recommend-form { display:grid; grid-template-columns:minmax(180px,1fr) minmax(220px,1.25fr) auto; gap:10px; align-items:end; }
+.recommend-form .primary-btn { min-height:44px; }
+.recommend-summary { margin-top:18px; }
+.recommend-callout { display:grid; gap:5px; padding:16px; border:1px solid #61712f; border-radius:14px; background:rgba(149,173,63,.10); }
+.recommend-callout strong { font-size:1.4rem; }
+.recommend-callout span:not(.eyebrow), .recommend-callout small { color:var(--muted); }
+.recommend-results { display:grid; gap:9px; margin-top:12px; }
+.recommend-card { display:grid; grid-template-columns:42px minmax(0,1fr) 54px; gap:12px; align-items:start; padding:14px; border:1px solid var(--line); border-radius:13px; background:var(--panel2); }
+.recommend-card.best { border-color:#61712f; }
+.recommend-rank { width:36px; height:36px; display:grid; place-items:center; border-radius:10px; background:#111712; color:var(--muted); font-weight:800; }
+.recommend-title { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+.recommend-main p { color:var(--muted); margin:7px 0; font-size:.88rem; }
+.recommend-main small { color:var(--muted); display:block; margin-top:7px; }
+.recommend-meta { display:flex; flex-wrap:wrap; gap:6px; }
+.recommend-meta span { border:1px solid var(--line); border-radius:999px; padding:4px 7px; font-size:.7rem; color:var(--muted); }
+.recommend-score { font-size:1.15rem; font-weight:900; color:var(--accent); text-align:right; }
+.recommend-warning { display:inline-block; margin-top:8px; color:#ffd6cf; font-size:.72rem; border:1px solid #6a3f39; border-radius:999px; padding:4px 7px; }
+.compact-heading { margin-bottom:12px; }
+@media (max-width:680px) {
+  .recommend-form { grid-template-columns:1fr; }
+  .recommend-card { grid-template-columns:36px minmax(0,1fr); }
+  .recommend-score { grid-column:2; text-align:left; }
 }
