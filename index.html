@@ -43,11 +43,19 @@
           <p id="page-subtitle">Shared farm status and current objective.</p>
         </div>
         <div class="top-actions">
+          <span id="sync-status" class="sync-status">Connecting…</span>
+          <button id="refresh-data-btn" class="ghost-btn">Refresh</button>
           <button id="export-btn" class="ghost-btn">Export data</button>
-          <label class="import-btn">Import data<input id="import-file" type="file" accept=".json"></label>
-          <button id="reset-campaign-btn" class="ghost-btn danger-action">Reset campaign</button>
+          <label class="import-btn admin-only">Import data<input id="import-file" type="file" accept=".json"></label>
+          <button id="migrate-local-btn" class="ghost-btn admin-only">Push browser data</button>
+          <button id="reset-campaign-btn" class="ghost-btn danger-action admin-only">Reset campaign</button>
+          <button id="admin-login-btn" class="ghost-btn">Admin</button>
         </div>
       </header>
+
+      <div id="readonly-banner" class="readonly-banner">
+        Public view · farm data is read-only. Admin changes sync to Supabase.
+      </div>
 
       <section id="dashboard" class="view active">
         <div class="stats-grid">
@@ -475,6 +483,25 @@
     </main>
   </div>
 
+
+  <dialog id="admin-dialog" class="admin-dialog">
+    <form id="admin-login-form" method="dialog">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">Admin access</span>
+          <h2>Sign in to edit farm data</h2>
+        </div>
+        <button id="admin-dialog-close" class="small-btn" type="button">Close</button>
+      </div>
+      <p class="muted">Public visitors do not need an account. Only the authorised admin account can write to the database.</p>
+      <label>Email<input name="email" type="email" autocomplete="username" required></label>
+      <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
+      <button class="primary-btn" type="submit">Sign in</button>
+      <p id="admin-message" class="admin-message" aria-live="polite"></p>
+    </form>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="app.js"></script>
 </body>
 </html>

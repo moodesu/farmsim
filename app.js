@@ -26,19 +26,45 @@ const defaults = {
 };
 
 function clone(x){ return JSON.parse(JSON.stringify(x)); }
-let state = loadState();
 
-function loadState(){
+const SUPABASE_URL = "https://gortstcnvphczhoadvol.supabase.co";
+const SUPABASE_KEY = "sb_publishable_5ZGl8kuShrGq-3DEXjDdaQ_S9rAmYqJ";
+const FARM_SLUG = "three-hands-farm";
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let state = clone(defaults);
+let farmId = null;
+let isAdmin = false;
+let saveInFlight = false;
+
+function loadLocalBackup(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
-    if(!raw) return clone(defaults);
-    const parsed = JSON.parse(raw);
-    return Object.assign(clone(defaults), parsed);
+    if(!raw) return null;
+    return Object.assign(clone(defaults), JSON.parse(raw));
   }catch(e){
-    return clone(defaults);
+    return null;
   }
 }
-function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); renderAll(); }
+
+function cacheLocal(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function setSyncStatus(text, kind=""){
+  const el=document.getElementById("sync-status");
+  if(!el) return;
+  el.textContent=text;
+  el.className=`sync-status ${kind}`.trim();
+}
+
+function setAdminMode(enabled){
+  isAdmin=!!enabled;
+  document.body.classList.toggle("admin-mode", isAdmin);
+  const btn=document.getElementById("admin-login-btn");
+  if(btn) btn.textContent=isAdmin ? "Sign out" : "Admin";
+}
+
 function money(v){ return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(Number(v)||0); }
 function esc(s=""){ return String(s).replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m])); }
 
@@ -385,14 +411,16 @@ document.getElementById("field-form").addEventListener("submit",e=>{
 
 document.getElementById("crop-current-month").addEventListener("change",e=>{
   state.session.month=e.target.value;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  cacheLocal();
   renderCropPlanner();
+  if(isAdmin) save();
 });
 document.getElementById("crop-recommend-form").addEventListener("submit",e=>{
   e.preventDefault();
   state.session.month=document.getElementById("crop-current-month").value;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  cacheLocal();
   renderCropRecommendations();
+  if(isAdmin) save();
 });
 document.getElementById("crop-goal").addEventListener("change",renderCropRecommendations);
 document.getElementById("crop-plan-form").addEventListener("submit",e=>{
@@ -415,9 +443,193 @@ document.getElementById("balance-form").addEventListener("submit",e=>{
   save();
 });
 document.getElementById("transaction-form").addEventListener("submit",e=>{
-  e.preventDefault(); const d=Object.fromEntries(new FormData(e.target)); d.amount=Number(d.amount)||0; d.date=new Date().toLocaleDateString();
+  e.preventDefault(); const d=Object.fromEntries(new FormData(e.target)); d.amount=Number(d.amount)||0;
+  d.date=new Date().toISOString().slice(0,10);
   state.transactions.push(d); state.finance.cash=Math.max(0,state.finance.cash+d.amount); e.target.reset(); save();
 });
+
+
+async function checkAdminSession(){
+  const {data:{session}}=await db.auth.getSession();
+  if(!session){
+    setAdminMode(false);
+    return false;
+  }
+  const {data, error}=await db.from("fs_admins").select("user_id").eq("user_id", session.user.id).maybeSingle();
+  if(error || !data){
+    setAdminMode(false);
+    return false;
+  }
+  setAdminMode(true);
+  return true;
+}
+
+async function loadRemoteState(showStatus=true){
+  try{
+    if(showStatus) setSyncStatus("Loading…");
+    const {data:farm,error:farmErr}=await db.from("fs_farm").select("*").eq("slug",FARM_SLUG).single();
+    if(farmErr) throw farmErr;
+    farmId=farm.id;
+
+    const [
+      tasksRes, fieldsRes, machinesRes, purchasesRes,
+      txRes, plansRes, milestonesRes, modsRes
+    ]=await Promise.all([
+      db.from("fs_tasks").select("*").eq("farm_id",farmId).order("sort_order",{ascending:true}).order("created_at",{ascending:true}),
+      db.from("fs_fields").select("*").eq("farm_id",farmId).order("created_at",{ascending:true}),
+      db.from("fs_machines").select("*").eq("farm_id",farmId).order("created_at",{ascending:true}),
+      db.from("fs_purchases").select("*").eq("farm_id",farmId).eq("purchased",false).order("created_at",{ascending:true}),
+      db.from("fs_transactions").select("*").eq("farm_id",farmId).order("happened_on",{ascending:true}).order("created_at",{ascending:true}),
+      db.from("fs_crop_plans").select("*").eq("farm_id",farmId).order("created_at",{ascending:true}),
+      db.from("fs_milestones").select("*").eq("farm_id",farmId).maybeSingle(),
+      db.from("fs_mods").select("*").eq("farm_id",farmId).eq("enabled",true).order("name",{ascending:true})
+    ]);
+
+    for(const r of [tasksRes,fieldsRes,machinesRes,purchasesRes,txRes,plansRes,milestonesRes,modsRes]){
+      if(r.error) throw r.error;
+    }
+
+    state={
+      ...clone(defaults),
+      players:Array.isArray(farm.players) ? farm.players.map(name=>({name,role:"Unassigned"})) : clone(defaults.players),
+      finance:{
+        cash:Number(farm.cash)||0,
+        debt:Number(farm.debt)||0,
+        farmValue:Number(farm.farm_value)||0,
+        landOwned:!!farm.land_owned
+      },
+      session:{
+        month:farm.game_month||"",
+        year:Number(farm.game_year)||1,
+        day:Number(farm.game_day)||1,
+        timescale:farm.timescale||"5x",
+        objective:farm.current_objective||""
+      },
+      tasks:(tasksRes.data||[]).map(r=>({
+        id:r.id,title:r.title,player:r.player,priority:r.priority,status:r.status,notes:r.notes||""
+      })),
+      fields:(fieldsRes.data||[]).map(r=>({
+        id:r.id,name:r.name,area:Number(r.area_ha)||null,crop:r.crop||"",state:r.state||"Planned",next:r.next_operation||"",notes:r.notes||""
+      })),
+      machines:(machinesRes.data||[]).map(r=>({
+        id:r.id,name:r.name,type:r.type||"",ownership:r.ownership||"Owned",value:Number(r.value)||0,notes:r.notes||""
+      })),
+      purchases:(purchasesRes.data||[]).map(r=>({
+        id:r.id,name:r.name,price:Number(r.target_price)||0,priority:r.priority||"Medium",reason:r.reason||""
+      })),
+      transactions:(txRes.data||[]).map(r=>({
+        id:r.id,description:r.description,amount:Number(r.amount)||0,category:r.category||"Other",date:r.happened_on||""
+      })),
+      cropPlans:(plansRes.data||[]).map(r=>({
+        id:r.id,field:r.field_name||"",crop:r.crop,operation:r.operation||"",month:r.target_month||"",notes:r.notes||""
+      })),
+      milestones:{
+        firstLand:!!milestonesRes.data?.first_land,
+        ownTractor:!!milestonesRes.data?.own_tractor,
+        ownField:!!milestonesRes.data?.own_field,
+        firstHarvest:!!milestonesRes.data?.first_harvest
+      },
+      mods:modsRes.data||[]
+    };
+    cacheLocal();
+    renderAll();
+    setSyncStatus("Live · Supabase","ok");
+  }catch(err){
+    console.error(err);
+    const cached=loadLocalBackup();
+    if(cached){
+      state=cached;
+      renderAll();
+      setSyncStatus("Offline cache","error");
+    }else{
+      setSyncStatus("Load failed","error");
+    }
+  }
+}
+
+async function replaceRows(table, rows){
+  const {error:delErr}=await db.from(table).delete().eq("farm_id",farmId);
+  if(delErr) throw delErr;
+  if(rows.length){
+    const {error:insErr}=await db.from(table).insert(rows);
+    if(insErr) throw insErr;
+  }
+}
+
+async function syncRemoteState(){
+  if(!isAdmin || !farmId) return;
+  if(saveInFlight) return;
+  saveInFlight=true;
+  setSyncStatus("Saving…");
+  try{
+    syncMilestones();
+    const {error:farmErr}=await db.from("fs_farm").update({
+      cash:state.finance.cash,
+      debt:state.finance.debt,
+      farm_value:state.finance.farmValue,
+      land_owned:state.finance.landOwned,
+      game_month:state.session.month||"",
+      game_year:state.session.year||1,
+      game_day:state.session.day||1,
+      days_per_month:3,
+      timescale:state.session.timescale||"5x",
+      current_objective:state.session.objective||"",
+      map_name:"Moss Valley",
+      updated_at:new Date().toISOString()
+    }).eq("id",farmId);
+    if(farmErr) throw farmErr;
+
+    await replaceRows("fs_tasks", state.tasks.map((t,i)=>({
+      farm_id:farmId,title:t.title,player:t.player||"All",priority:t.priority||"Medium",
+      status:t.status||"Ready",notes:t.notes||"",sort_order:i
+    })));
+    await replaceRows("fs_fields", state.fields.map(f=>({
+      farm_id:farmId,name:f.name,area_ha:f.area||null,crop:f.crop||"",state:f.state||"Planned",
+      next_operation:f.next||"",notes:f.notes||""
+    })));
+    await replaceRows("fs_machines", state.machines.map(m=>({
+      farm_id:farmId,name:m.name,type:m.type||"",ownership:m.ownership||"Owned",
+      value:Number(m.value)||0,notes:m.notes||""
+    })));
+    await replaceRows("fs_purchases", state.purchases.map(p=>({
+      farm_id:farmId,name:p.name,target_price:Number(p.price)||0,priority:p.priority||"Medium",
+      reason:p.reason||"",purchased:false
+    })));
+    await replaceRows("fs_transactions", state.transactions.map(t=>({
+      farm_id:farmId,description:t.description,amount:Number(t.amount)||0,
+      category:t.category||"Other",happened_on:/^\d{4}-\d{2}-\d{2}$/.test(t.date||"")?t.date:new Date().toISOString().slice(0,10)
+    })));
+    await replaceRows("fs_crop_plans", state.cropPlans.map(p=>({
+      farm_id:farmId,field_name:p.field||"",crop:p.crop,operation:p.operation||"",
+      target_month:p.month||"",notes:p.notes||""
+    })));
+
+    const {error:milestoneErr}=await db.from("fs_milestones").upsert({
+      farm_id:farmId,
+      first_land:!!state.milestones.firstLand,
+      own_tractor:!!state.milestones.ownTractor,
+      own_field:!!state.milestones.ownField,
+      first_harvest:!!state.milestones.firstHarvest,
+      updated_at:new Date().toISOString()
+    });
+    if(milestoneErr) throw milestoneErr;
+
+    cacheLocal();
+    setSyncStatus("Saved · Supabase","ok");
+  }catch(err){
+    console.error(err);
+    setSyncStatus("Save failed","error");
+    alert("Supabase save failed. Your browser copy is still preserved locally.");
+  }finally{
+    saveInFlight=false;
+  }
+}
+
+function save(){
+  cacheLocal();
+  renderAll();
+  if(isAdmin) syncRemoteState();
+}
 
 function downloadCampaignBackup(filename="fs25-hardcore-farm-data.json"){
   const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
@@ -446,16 +658,84 @@ document.getElementById("reset-campaign-btn").addEventListener("click",()=>{
   downloadCampaignBackup(`fs25-campaign-backup-${stamp}.json`);
 
   state=clone(defaults);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  cacheLocal();
   renderAll();
   navTo("dashboard");
+  if(isAdmin) syncRemoteState();
   alert("Campaign reset complete. Your previous campaign was exported as a JSON backup.");
 });
 document.getElementById("import-file").addEventListener("change",async e=>{
   const file=e.target.files?.[0]; if(!file) return;
-  try{ const imported=JSON.parse(await file.text()); state=Object.assign(clone(defaults), imported); save(); alert("Farm data imported."); }
+  if(!isAdmin){ alert("Admin sign-in is required to import farm data."); e.target.value=""; return; }
+  try{ const imported=JSON.parse(await file.text()); state=Object.assign(clone(defaults), imported); save(); alert("Farm data imported and queued for Supabase sync."); }
   catch(err){ alert("That file could not be imported."); }
   e.target.value="";
 });
 
-renderAll();
+
+async function initialiseApp(){
+  setAdminMode(false);
+  await checkAdminSession();
+  await loadRemoteState();
+
+  db.auth.onAuthStateChange(async ()=>{
+    await checkAdminSession();
+    renderAll();
+  });
+
+  document.getElementById("refresh-data-btn").addEventListener("click",()=>loadRemoteState());
+
+  const dialog=document.getElementById("admin-dialog");
+  const msg=document.getElementById("admin-message");
+  document.getElementById("admin-login-btn").addEventListener("click",async ()=>{
+    if(isAdmin){
+      await db.auth.signOut();
+      setAdminMode(false);
+      msg.textContent="";
+      setSyncStatus("Public view","ok");
+      return;
+    }
+    dialog.showModal();
+  });
+  document.getElementById("admin-dialog-close").addEventListener("click",()=>dialog.close());
+
+  document.getElementById("admin-login-form").addEventListener("submit",async e=>{
+    e.preventDefault();
+    const form=new FormData(e.target);
+    msg.textContent="Signing in…";
+    const {data,error}=await db.auth.signInWithPassword({
+      email:String(form.get("email")||"").trim(),
+      password:String(form.get("password")||"")
+    });
+    if(error){
+      msg.textContent=error.message;
+      return;
+    }
+    const allowed=await checkAdminSession();
+    if(!allowed){
+      const uid=data.user?.id||"unknown";
+      msg.textContent=`Signed in, but this account is not authorised as the farm admin. User ID: ${uid}`;
+      return;
+    }
+    msg.textContent="Admin access enabled.";
+    dialog.close();
+    await loadRemoteState(false);
+  });
+
+  document.getElementById("migrate-local-btn").addEventListener("click",async ()=>{
+    if(!isAdmin) return;
+    const local=loadLocalBackup();
+    if(!local){ alert("No browser campaign data was found."); return; }
+    if(!confirm("Replace the Supabase farm state with the campaign currently stored in this browser?")) return;
+    state=Object.assign(clone(defaults),local);
+    renderAll();
+    await syncRemoteState();
+    alert("Browser campaign data has been pushed to Supabase.");
+  });
+
+  setInterval(()=>{
+    if(!isAdmin && document.visibilityState==="visible") loadRemoteState(false);
+  },60000);
+}
+
+initialiseApp();

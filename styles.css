@@ -187,3 +187,58 @@ input,select { width:100%; border:1px solid var(--line); background:#0e140f; col
 \n.mods-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-top:18px; }\n.mod-card { border:1px solid var(--line); border-radius:14px; padding:16px; background:var(--panel2); min-width:0; }\n.mod-card-head { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }\n.mod-card h3 { margin:0; font-size:1rem; }\n.mod-card p { color:var(--muted); line-height:1.5; margin:14px 0 10px; }\n.mod-card small { color:var(--muted); }\n@media (max-width:980px){ .mods-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }\n@media (max-width:680px){ .mods-grid { grid-template-columns:1fr; } }\n
 .danger-action { color:var(--danger); border-color:#5d3531; }
 .danger-action:hover { background:#2a1817; color:#ffd8d3; }
+
+
+.sync-status {
+  align-self:center;
+  color:var(--muted);
+  font-size:.78rem;
+  padding:8px 10px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  background:var(--panel);
+}
+.sync-status.ok { color:#c6efd4; border-color:#315b3f; }
+.sync-status.error { color:#ffd6cf; border-color:#6a3f39; }
+
+.readonly-banner {
+  margin:-10px 0 18px;
+  padding:10px 12px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  color:var(--muted);
+  background:rgba(255,255,255,.015);
+  font-size:.82rem;
+}
+body.admin-mode .readonly-banner { display:none; }
+body:not(.admin-mode) .admin-only { display:none !important; }
+body:not(.admin-mode) #task-form,
+body:not(.admin-mode) #session-form,
+body:not(.admin-mode) #field-form,
+body:not(.admin-mode) #machine-form,
+body:not(.admin-mode) #purchase-form,
+body:not(.admin-mode) #balance-form,
+body:not(.admin-mode) #transaction-form,
+body:not(.admin-mode) #crop-plan-form,
+body:not(.admin-mode) #clear-done-btn,
+body:not(.admin-mode) .move-task,
+body:not(.admin-mode) .delete-task,
+body:not(.admin-mode) .delete-field,
+body:not(.admin-mode) .delete-machine,
+body:not(.admin-mode) .delete-purchase,
+body:not(.admin-mode) .delete-crop-plan {
+  display:none !important;
+}
+
+.admin-dialog {
+  width:min(460px, calc(100% - 28px));
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:20px;
+  color:var(--text);
+  background:var(--panel);
+  box-shadow:0 30px 80px rgba(0,0,0,.45);
+}
+.admin-dialog::backdrop { background:rgba(0,0,0,.66); }
+.admin-dialog form { display:grid; gap:12px; }
+.admin-message { min-height:1.2em; color:var(--muted); font-size:.82rem; margin:0; overflow-wrap:anywhere; }

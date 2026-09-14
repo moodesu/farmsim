@@ -101,3 +101,34 @@ The planner keeps:
 - safe campaign reset with automatic JSON backup
 
 Use **Reset campaign** after deploying v7 if you want a clean Moss Valley start.
+
+
+## v8 — Supabase shared continuity
+
+The planner now uses the `farmsim` Supabase project for shared persistent data.
+
+### Access model
+- Public visitors: read-only, no login required.
+- Admin: Supabase email/password sign-in.
+- Only users listed in `fs_admins` may write.
+- The frontend uses the Supabase publishable key, which is safe to expose in a public client when RLS is configured correctly.
+
+### Data model
+- `fs_farm`
+- `fs_tasks`
+- `fs_fields`
+- `fs_machines`
+- `fs_purchases`
+- `fs_transactions`
+- `fs_crop_plans`
+- `fs_milestones`
+- `fs_mods`
+- `fs_admins`
+
+The old browser state remains cached in `localStorage` as an offline/emergency backup.
+
+### First-time migration
+1. Create the admin user in Supabase Auth.
+2. Add that user's UUID to `fs_admins`.
+3. Sign in through the site's **Admin** button.
+4. Use **Push browser data** once to migrate the existing local campaign into Supabase.
