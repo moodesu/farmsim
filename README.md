@@ -8,7 +8,7 @@ Players:
 - Zakk
 
 Default campaign:
-- New Frontier
+- Moss Valley
 - Blank-slate co-op start: no free pre-built farm assets
 - One shared farm
 - $1,000 total starting cash
@@ -59,3 +59,45 @@ For true shared live data between Don, Mdgi and Zakk, the next step is Supabase 
 ## v4 crop recommender
 
 The Crop Planner now ranks crops by selected month and goal (low cost, quick cash, or long-term value), while factoring in campaign stage and machinery recorded in the app. It remains fully static and uses browser localStorage.
+
+
+## v5 update
+
+- Campaign map changed to Moss Valley.
+- Added Mods / DLC page with the 12 currently installed mods.
+- Added stage-gating guidance for installed equipment/buildings/productions.
+- Added Starter Camp Rule.
+- Added Better Contracts availability rule with normal payouts only.
+- Crop planner wording generalized to the seasonal FS25 crop calendar.
+
+
+## Resetting for a new map/campaign
+
+Use **Reset campaign** in the top-right controls to start fresh without changing the site's
+Moss Valley configuration, player names, rules, or installed-mod reference list.
+
+Before clearing the browser campaign state, the app automatically downloads a timestamped JSON
+backup. You can restore that campaign later with **Import data**.
+
+Reset data includes:
+- cash, debt, farm value and land ownership state
+- session details and tasks
+- fields and crop plans
+- machinery and planned purchases
+- transactions
+- progression milestones
+
+
+## v7 map update
+
+The campaign map is now **Moss Valley**.
+
+The planner keeps:
+- Don, Mdgi and Zakk
+- the hardcore co-op rules
+- the static/localStorage architecture
+- dynamic crop planning
+- mod/DLC tracking
+- safe campaign reset with automatic JSON backup
+
+Use **Reset campaign** after deploying v7 if you want a clean Moss Valley start.

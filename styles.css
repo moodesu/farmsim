@@ -184,3 +184,6 @@ input,select { width:100%; border:1px solid var(--line); background:#0e140f; col
   .recommend-card { grid-template-columns:36px minmax(0,1fr); }
   .recommend-score { grid-column:2; text-align:left; }
 }
+\n.mods-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-top:18px; }\n.mod-card { border:1px solid var(--line); border-radius:14px; padding:16px; background:var(--panel2); min-width:0; }\n.mod-card-head { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }\n.mod-card h3 { margin:0; font-size:1rem; }\n.mod-card p { color:var(--muted); line-height:1.5; margin:14px 0 10px; }\n.mod-card small { color:var(--muted); }\n@media (max-width:980px){ .mods-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }\n@media (max-width:680px){ .mods-grid { grid-template-columns:1fr; } }\n
+.danger-action { color:var(--danger); border-color:#5d3531; }
+.danger-action:hover { background:#2a1817; color:#ffd8d3; }

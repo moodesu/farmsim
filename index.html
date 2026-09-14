@@ -24,14 +24,15 @@
         <button class="nav-btn" data-view="fields">Fields</button>
         <button class="nav-btn" data-view="crops">Crop Planner</button>
         <button class="nav-btn" data-view="machines">Machinery</button>
+        <button class="nav-btn" data-view="mods">Mods / DLC</button>
         <button class="nav-btn" data-view="finance">Finance</button>
         <button class="nav-btn" data-view="progression">Progression</button>
         <button class="nav-btn" data-view="rules">Ruleset</button>
       </nav>
 
       <div class="sidebar-foot">
-        <span>New Frontier</span>
-        <small>3-player shared survival farm</small>
+        <span>Moss Valley</span>
+        <small>3-player shared hardcore co-op farm</small>
       </div>
     </aside>
 
@@ -44,6 +45,7 @@
         <div class="top-actions">
           <button id="export-btn" class="ghost-btn">Export data</button>
           <label class="import-btn">Import data<input id="import-file" type="file" accept=".json"></label>
+          <button id="reset-campaign-btn" class="ghost-btn danger-action">Reset campaign</button>
         </div>
       </header>
 
@@ -205,7 +207,7 @@
             <div>
               <span class="eyebrow">Crop decision tool</span>
               <h2>What should we plant?</h2>
-              <p class="muted">Choose the game month and goal. Recommendations are ranked using the New Frontier crop calendar, your current campaign stage, and machinery recorded in the planner.</p>
+              <p class="muted">Choose the game month and goal. Recommendations are ranked using the seasonal crop calendar, your current campaign stage, and machinery recorded in the planner.</p>
             </div>
           </div>
           <form id="crop-recommend-form" class="recommend-form">
@@ -242,7 +244,7 @@
         </div>
 
         <article class="panel crop-calendar-panel">
-          <div class="panel-heading compact-heading"><div><span class="eyebrow">Reference</span><h2>New Frontier crop calendar</h2></div></div>
+          <div class="panel-heading compact-heading"><div><span class="eyebrow">Reference</span><h2>Seasonal crop calendar</h2></div></div>
           <div class="calendar-legend"><span><i class="legend-swatch plant"></i> Planting season</span><span><i class="legend-swatch harvest"></i> Harvest season</span><span><i class="legend-swatch current"></i> Current month</span></div>
           <div class="crop-calendar-wrap">
             <div id="crop-calendar" class="crop-calendar"></div>
@@ -300,6 +302,25 @@
           <article class="panel"><h2>Fleet</h2><div id="machine-list" class="data-list"></div></article>
           <article class="panel"><h2>Purchase wishlist</h2><div id="purchase-list" class="data-list"></div></article>
         </div>
+      </section>
+
+      <section id="mods" class="view">
+        <article class="panel">
+          <div class="panel-heading">
+            <div>
+              <span class="eyebrow">Current installation</span>
+              <h2>Mods / DLC</h2>
+              <p class="muted">12 installed. Installation does not automatically override the hardcore rules; some items remain stage-gated.</p>
+            </div>
+            <span class="badge">12 / 12 installed</span>
+          </div>
+          <div id="mods-grid" class="mods-grid"></div>
+        </article>
+        <article class="panel">
+          <span class="eyebrow">Compatibility rule</span>
+          <h2>How mods are used in this save</h2>
+          <p class="muted">QoL and map mods may be active immediately. Equipment, buildings, animals and productions still have to be earned under the campaign progression. Any mod that increases contract payout, gives free assets, or creates passive income remains prohibited unless the ruleset explicitly unlocks it.</p>
+        </article>
       </section>
 
       <section id="finance" class="view">
@@ -362,8 +383,8 @@
               <li>No land, vehicles, buildings, livestock or productions.</li>
               <li>Delete or sell all map-provided starter equipment, then correct the balance back to $1,000.</li>
               <li>No starting loan.</li>
-              <li>Map: New Frontier.</li>
-              <li>Use the map as a blank-slate co-op build: do not claim any pre-built farm assets as free starting property.</li>
+              <li>Map: Moss Valley.</li>
+              <li>Start with no productive land, vehicles, buildings or free farm assets even if the map offers starter property.</li>
             </ul>
           </div>
 
@@ -386,7 +407,9 @@
               <li>Maximum two simultaneous contracts.</li>
               <li>Contract machinery may only be used for its contract.</li>
               <li>No normal leasing, loans, passive income, subsidies, productions or animals.</li>
-              <li>First land may only be purchased if at least $10,000 remains after purchase.</li>
+              <li>First productive land may only be purchased if at least $10,000 remains after purchase.</li>
+              <li><strong>Starter Camp Rule:</strong> before productive land is owned, one minimal parcel may be bought solely for a sleep trigger/basic camp. It may not be farmed, logged for profit, used for animals/productions, or counted as the first productive parcel.</li>
+              <li><strong>Contract Availability Rule:</strong> Better Contracts may be used to refresh/generate normal contracts when work dries up, but payout modifiers must remain off and payout-boosting mods are prohibited.</li>
             </ul>
           </div>
 
@@ -424,6 +447,15 @@
             <ul>
               <li>Unlock at $750,000 farm value.</li>
               <li>Major productions, large livestock operations, extensive leasing and large-scale expansion unlocked.</li>
+            </ul>
+          </div>
+
+          <div class="rule-section">
+            <h3>Campaign reset</h3>
+            <ul>
+              <li>The Reset Campaign button clears farm progress only: balances, tasks, fields, machinery, purchases, crop plans, transactions and milestones.</li>
+              <li>Moss Valley, the hardcore rules, player names and installed-mod reference list remain part of the site.</li>
+              <li>A JSON backup of the current campaign is downloaded automatically before the reset.</li>
             </ul>
           </div>
 

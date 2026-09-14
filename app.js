@@ -155,6 +155,33 @@ function renderCropPlanner(){
   document.querySelectorAll(".delete-crop-plan").forEach(b=>b.addEventListener("click",()=>{state.cropPlans=state.cropPlans.filter(p=>p.id!==b.dataset.id); save();}));  renderCropRecommendations();
 }
 
+const installedMods = [
+  {name:"Better Contracts", category:"Gameplay / contracts", status:"Allowed", unlock:0, note:"Use for contract visibility and refresh/generation only. Keep payout modifiers off."},
+  {name:"Cowshed 3+0", category:"Building / livestock", status:"Stage 3", unlock:3, note:"Installed now, but livestock infrastructure remains locked until Established Farm."},
+  {name:"House Package Volume 3", category:"Building / farmhouse", status:"Stage 1", unlock:1, note:"May be purchased once the farm owns productive land and can afford construction."},
+  {name:"Grain Dryer Pack", category:"Production / storage", status:"Stage 3", unlock:3, note:"Treat as a basic production facility; locked until Established Farm."},
+  {name:"John Deere 710", category:"Equipment / tractor", status:"Stage 1", unlock:1, note:"50 hp, $7,500 starter tractor. Fits the small-equipment progression."},
+  {name:"Moss Valley", category:"Map", status:"Active map", unlock:0, note:"Current campaign map: more existing fields and finer-grained land progression."},
+  {name:"Land Rover Defender", category:"Vehicle", status:"Earn normally", unlock:1, note:"May be bought when affordable; installation does not grant a free vehicle."},
+  {name:"Manure Basin", category:"Building / livestock", status:"Stage 3", unlock:3, note:"Use once livestock is unlocked and manure handling is genuinely needed."},
+  {name:"Mini Biogas Plant", category:"Production", status:"Stage 3", unlock:3, note:"Production income remains locked until Established Farm."},
+  {name:"Portable Sleep Trigger", category:"Utility / farmhouse", status:"Camp exception", unlock:0, note:"Allowed on the one Starter Camp parcel before productive land is owned."},
+  {name:"Shed Pack", category:"Building / storage", status:"Stage 1", unlock:1, note:"Storage buildings may be purchased after productive land is established."},
+  {name:"Windmill", category:"Placeable", status:"Rule-gated", unlock:99, note:"If it generates passive income, it is prohibited under the current rules. Decorative use is fine."}
+];
+
+function renderMods(){
+  const root=document.getElementById("mods-grid");
+  if(!root) return;
+  const stage=currentStage();
+  root.innerHTML=installedMods.map(mod=>{
+    const available=mod.unlock===99 ? false : stage>=mod.unlock;
+    const stateText=mod.unlock===99 ? mod.status : available ? "Available now" : `Unlocks Stage ${mod.unlock}`;
+    const stateClass=mod.unlock===99 ? "critical" : available ? "done" : "";
+    return `<article class="mod-card"><div class="mod-card-head"><div><span class="eyebrow">${esc(mod.category)}</span><h3>${esc(mod.name)}</h3></div><span class="badge ${stateClass}">${esc(stateText)}</span></div><p>${esc(mod.note)}</p><small>Installed · ${esc(mod.status)}</small></article>`;
+  }).join("");
+}
+
 const stageDefs = [
   {id:0,name:"Broke",threshold:0,desc:"Contract labour only. No land, loans or normal leasing."},
   {id:1,name:"Homestead",threshold:0,desc:"First parcel owned. Buy machinery; leasing still locked."},
@@ -186,6 +213,7 @@ function navTo(id){
     fields:["Fields","Track parcels, crops and next operations."],
     crops:["Crop Planner","Seasonal planting, harvest windows and farm crop plans."],
     machines:["Machinery","Fleet inventory and purchase wishlist."],
+    mods:["Mods / DLC","Installed mods and their hardcore campaign status."],
     finance:["Finance","Shared farm balances and transaction log."],
     progression:["Progression","Campaign stages and unlock conditions."],
     rules:["Ruleset","The official hardcore co-op house rules."]
@@ -337,6 +365,7 @@ function renderAll(){
   renderFields();
   renderCropPlanner();
   renderMachines();
+  renderMods();
   renderFinance();
   renderProgression();
 }
@@ -390,9 +419,37 @@ document.getElementById("transaction-form").addEventListener("submit",e=>{
   state.transactions.push(d); state.finance.cash=Math.max(0,state.finance.cash+d.amount); e.target.reset(); save();
 });
 
-document.getElementById("export-btn").addEventListener("click",()=>{
+function downloadCampaignBackup(filename="fs25-hardcore-farm-data.json"){
   const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
-  const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download="fs25-hardcore-farm-data.json"; a.click(); URL.revokeObjectURL(url);
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download=filename;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),0);
+}
+
+document.getElementById("export-btn").addEventListener("click",()=>{
+  downloadCampaignBackup();
+});
+
+document.getElementById("reset-campaign-btn").addEventListener("click",()=>{
+  const ok=confirm(
+    "Reset the Moss Valley campaign?\n\n" +
+    "This will clear cash/debt, tasks, fields, machinery, purchases, transactions, crop plans and progression. " +
+    "The rules, players, map and mod reference list stay in the site.\n\n" +
+    "A JSON backup will download automatically before anything is cleared."
+  );
+  if(!ok) return;
+
+  const stamp=new Date().toISOString().replace(/[:.]/g,"-");
+  downloadCampaignBackup(`fs25-campaign-backup-${stamp}.json`);
+
+  state=clone(defaults);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  renderAll();
+  navTo("dashboard");
+  alert("Campaign reset complete. Your previous campaign was exported as a JSON backup.");
 });
 document.getElementById("import-file").addEventListener("change",async e=>{
   const file=e.target.files?.[0]; if(!file) return;
