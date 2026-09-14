@@ -313,17 +313,33 @@
       </section>
 
       <section id="mods" class="view">
-        <article class="panel">
-          <div class="panel-heading">
-            <div>
-              <span class="eyebrow">Current installation</span>
-              <h2>Mods / DLC</h2>
-              <p class="muted">12 installed. Installation does not automatically override the hardcore rules; some items remain stage-gated.</p>
+        <div class="two-col mods-admin-layout">
+          <article class="panel admin-only">
+            <span class="eyebrow">Admin</span>
+            <h2>Add mod / DLC</h2>
+            <form id="mod-form" class="form-grid">
+              <label>Name<input name="name" required maxlength="100" placeholder="e.g. Manual Attach"></label>
+              <label>Category<input name="category" maxlength="80" placeholder="Gameplay / realism"></label>
+              <label>Status<select name="status"><option>Allowed</option><option>Active map</option><option>Earn normally</option><option>Camp exception</option><option>Stage 1</option><option>Stage 2</option><option>Stage 3</option><option>Stage 4</option><option>Rule-gated</option></select></label>
+              <label>Unlock stage<select name="unlock_stage"><option value="0">Stage 0 / immediate</option><option value="1">Stage 1</option><option value="2">Stage 2</option><option value="3">Stage 3</option><option value="4">Stage 4</option><option value="99">Never / rule-gated</option></select></label>
+              <label class="full">ModHub URL<input name="modhub_url" type="url" placeholder="Optional official ModHub link"></label>
+              <label class="full">Rule note<input name="rule_note" maxlength="240" placeholder="How this mod may be used in the hardcore save"></label>
+              <button class="primary-btn full" type="submit">Add mod</button>
+            </form>
+          </article>
+
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <span class="eyebrow">Current installation</span>
+                <h2>Mods / DLC</h2>
+                <p class="muted">This list is stored in Supabase. Public viewers can see it; the admin can add or remove entries here.</p>
+              </div>
+              <span id="mods-count" class="badge">0 installed</span>
             </div>
-            <span class="badge">12 / 12 installed</span>
-          </div>
-          <div id="mods-grid" class="mods-grid"></div>
-        </article>
+            <div id="mods-grid" class="mods-grid"></div>
+          </article>
+        </div>
         <article class="panel">
           <span class="eyebrow">Compatibility rule</span>
           <h2>How mods are used in this save</h2>

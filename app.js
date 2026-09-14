@@ -17,6 +17,7 @@ const defaults = {
   purchases: [],
   transactions: [],
   cropPlans: [],
+  mods: [],
   milestones: {
     firstLand:false,
     ownTractor:false,
@@ -181,31 +182,30 @@ function renderCropPlanner(){
   document.querySelectorAll(".delete-crop-plan").forEach(b=>b.addEventListener("click",()=>{state.cropPlans=state.cropPlans.filter(p=>p.id!==b.dataset.id); save();}));  renderCropRecommendations();
 }
 
-const installedMods = [
-  {name:"Better Contracts", category:"Gameplay / contracts", status:"Allowed", unlock:0, note:"Use for contract visibility and refresh/generation only. Keep payout modifiers off."},
-  {name:"Cowshed 3+0", category:"Building / livestock", status:"Stage 3", unlock:3, note:"Installed now, but livestock infrastructure remains locked until Established Farm."},
-  {name:"House Package Volume 3", category:"Building / farmhouse", status:"Stage 1", unlock:1, note:"May be purchased once the farm owns productive land and can afford construction."},
-  {name:"Grain Dryer Pack", category:"Production / storage", status:"Stage 3", unlock:3, note:"Treat as a basic production facility; locked until Established Farm."},
-  {name:"John Deere 710", category:"Equipment / tractor", status:"Stage 1", unlock:1, note:"50 hp, $7,500 starter tractor. Fits the small-equipment progression."},
-  {name:"Moss Valley", category:"Map", status:"Active map", unlock:0, note:"Current campaign map: more existing fields and finer-grained land progression."},
-  {name:"Land Rover Defender", category:"Vehicle", status:"Earn normally", unlock:1, note:"May be bought when affordable; installation does not grant a free vehicle."},
-  {name:"Manure Basin", category:"Building / livestock", status:"Stage 3", unlock:3, note:"Use once livestock is unlocked and manure handling is genuinely needed."},
-  {name:"Mini Biogas Plant", category:"Production", status:"Stage 3", unlock:3, note:"Production income remains locked until Established Farm."},
-  {name:"Portable Sleep Trigger", category:"Utility / farmhouse", status:"Camp exception", unlock:0, note:"Allowed on the one Starter Camp parcel before productive land is owned."},
-  {name:"Shed Pack", category:"Building / storage", status:"Stage 1", unlock:1, note:"Storage buildings may be purchased after productive land is established."},
-  {name:"Windmill", category:"Placeable", status:"Rule-gated", unlock:99, note:"If it generates passive income, it is prohibited under the current rules. Decorative use is fine."}
-];
-
 function renderMods(){
   const root=document.getElementById("mods-grid");
   if(!root) return;
   const stage=currentStage();
-  root.innerHTML=installedMods.map(mod=>{
-    const available=mod.unlock===99 ? false : stage>=mod.unlock;
-    const stateText=mod.unlock===99 ? mod.status : available ? "Available now" : `Unlocks Stage ${mod.unlock}`;
-    const stateClass=mod.unlock===99 ? "critical" : available ? "done" : "";
-    return `<article class="mod-card"><div class="mod-card-head"><div><span class="eyebrow">${esc(mod.category)}</span><h3>${esc(mod.name)}</h3></div><span class="badge ${stateClass}">${esc(stateText)}</span></div><p>${esc(mod.note)}</p><small>Installed · ${esc(mod.status)}</small></article>`;
-  }).join("");
+  const mods=Array.isArray(state.mods)?state.mods:[];
+  const count=document.getElementById("mods-count");
+  if(count) count.textContent=`${mods.length} installed`;
+  root.innerHTML=mods.length ? mods.map(mod=>{
+    const unlock=Number(mod.unlock_stage ?? mod.unlock ?? 0);
+    const status=mod.status || "Allowed";
+    const note=mod.rule_note || mod.note || "";
+    const available=unlock===99 ? false : stage>=unlock;
+    const stateText=unlock===99 ? status : available ? "Available now" : `Unlocks Stage ${unlock}`;
+    const stateClass=unlock===99 ? "critical" : available ? "done" : "";
+    const link=mod.modhub_url ? `<a class="small-btn mod-link" href="${esc(mod.modhub_url)}" target="_blank" rel="noopener">ModHub</a>` : "";
+    return `<article class="mod-card"><div class="mod-card-head"><div><span class="eyebrow">${esc(mod.category||"Mod")}</span><h3>${esc(mod.name)}</h3></div><span class="badge ${stateClass}">${esc(stateText)}</span></div><p>${esc(note)}</p><div class="mod-card-actions"><small>${esc(status)}</small><div>${link}<button class="mini delete admin-only delete-mod" data-id="${esc(mod.id||"")}" data-name="${esc(mod.name)}">Remove</button></div></div></article>`;
+  }).join("") : `<div class="empty">No mods recorded yet.</div>`;
+  document.querySelectorAll(".delete-mod").forEach(b=>b.addEventListener("click",()=>{
+    if(!isAdmin) return;
+    const label=b.dataset.name||"this mod";
+    if(!confirm(`Remove ${label} from the farm mod list?`)) return;
+    state.mods=state.mods.filter(m=>m.id!==b.dataset.id);
+    save();
+  }));
 }
 
 const stageDefs = [
@@ -428,6 +428,26 @@ document.getElementById("crop-plan-form").addEventListener("submit",e=>{
   state.cropPlans.push({id:crypto.randomUUID(),...d}); e.target.reset(); save();
 });
 
+document.getElementById("mod-form")?.addEventListener("submit",e=>{
+  e.preventDefault();
+  if(!isAdmin) return;
+  const d=Object.fromEntries(new FormData(e.target));
+  const name=String(d.name||"").trim();
+  if(!name) return;
+  const duplicate=(state.mods||[]).some(m=>String(m.name).toLowerCase()===name.toLowerCase());
+  if(duplicate){ alert("That mod is already in the list."); return; }
+  state.mods.push({
+    id:crypto.randomUUID(), name,
+    category:String(d.category||"Mod").trim()||"Mod",
+    status:String(d.status||"Allowed"),
+    unlock_stage:Number(d.unlock_stage)||0,
+    modhub_url:String(d.modhub_url||"").trim(),
+    rule_note:String(d.rule_note||"").trim()
+  });
+  e.target.reset();
+  save();
+});
+
 document.getElementById("machine-form").addEventListener("submit",e=>{
   e.preventDefault(); const d=Object.fromEntries(new FormData(e.target)); d.value=Number(d.value)||0; state.machines.push(d); e.target.reset(); save();
 });
@@ -529,7 +549,10 @@ async function loadRemoteState(showStatus=true){
         ownField:!!milestonesRes.data?.own_field,
         firstHarvest:!!milestonesRes.data?.first_harvest
       },
-      mods:modsRes.data||[]
+      mods:(modsRes.data||[]).map(r=>({
+        id:r.id,name:r.name,category:r.category||"Mod",status:r.status||"Allowed",
+        unlock_stage:Number(r.unlock_stage)||0,rule_note:r.rule_note||"",modhub_url:r.modhub_url||""
+      }))
     };
     cacheLocal();
     renderAll();
@@ -602,6 +625,11 @@ async function syncRemoteState(){
     await replaceRows("fs_crop_plans", state.cropPlans.map(p=>({
       farm_id:farmId,field_name:p.field||"",crop:p.crop,operation:p.operation||"",
       target_month:p.month||"",notes:p.notes||""
+    })));
+    await replaceRows("fs_mods", (state.mods||[]).map(m=>({
+      farm_id:farmId,name:m.name,category:m.category||"Mod",enabled:true,
+      rule_note:m.rule_note||m.note||"",status:m.status||"Allowed",
+      unlock_stage:Number(m.unlock_stage ?? m.unlock ?? 0),modhub_url:m.modhub_url||""
     })));
 
     const {error:milestoneErr}=await db.from("fs_milestones").upsert({

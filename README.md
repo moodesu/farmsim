@@ -132,3 +132,8 @@ The old browser state remains cached in `localStorage` as an offline/emergency b
 2. Add that user's UUID to `fs_admins`.
 3. Sign in through the site's **Admin** button.
 4. Use **Push browser data** once to migrate the existing local campaign into Supabase.
+
+
+## v9 — editable mod list
+
+The Mods / DLC page now reads from `fs_mods` in Supabase. Public viewers can see the list. The authenticated farm admin can add and remove mods directly from the website, including category, stage gate, rule note and optional ModHub URL.
