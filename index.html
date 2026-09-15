@@ -188,6 +188,28 @@
       </section>
 
       <section id="fields" class="view">
+        <article class="panel field-map-panel">
+          <div class="panel-heading">
+            <div>
+              <span class="eyebrow">Moss Valley overview</span>
+              <h2>Field map</h2>
+              <p class="muted">Actual field boundaries and field IDs extracted from the Moss Valley map data. Select a field to identify it or prefill a new field record.</p>
+            </div>
+            <span class="badge">80 fields</span>
+          </div>
+          <div class="field-map-wrap">
+            <img src="moss-valley-overview.webp" alt="Moss Valley farm overview" class="field-map-image">
+            <svg id="field-map-svg" class="field-map-svg" viewBox="0 0 2048 2048" role="img" aria-label="Moss Valley field boundaries and field numbers"></svg>
+          </div>
+          <div class="field-map-footer">
+            <div>
+              <span class="eyebrow">Selected field</span>
+              <strong id="field-map-selection">None</strong>
+            </div>
+            <button id="field-map-use-btn" class="small-btn admin-only" type="button" disabled>Use in field record</button>
+          </div>
+        </article>
+
         <article class="panel">
           <div class="panel-heading">
             <div>
@@ -518,6 +540,7 @@
   </dialog>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="moss-fields.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

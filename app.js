@@ -37,6 +37,7 @@ let state = clone(defaults);
 let farmId = null;
 let isAdmin = false;
 let saveInFlight = false;
+let selectedMapFieldId = null;
 
 function loadLocalBackup(){
   try{
@@ -328,7 +329,48 @@ function renderPlanner(){
   f.objective.value=state.session.objective||"";
 }
 
+function trackedFieldIds(){
+  const ids=new Set();
+  for(const f of state.fields){
+    const match=String(f.name||"").match(/(?:field|f)\s*#?\s*(\d+)/i);
+    if(match) ids.add(Number(match[1]));
+  }
+  return ids;
+}
+
+function renderFieldMap(){
+  const svg=document.getElementById("field-map-svg");
+  if(!svg || !Array.isArray(window.MOSS_FIELDS)) return;
+  const tracked=trackedFieldIds();
+  svg.innerHTML=window.MOSS_FIELDS.map(field=>{
+    const points=field.points.map(p=>p.join(",")).join(" ");
+    const classes=["map-field",tracked.has(field.id)?"tracked":"",selectedMapFieldId===field.id?"selected":""].filter(Boolean).join(" ");
+    return `<g class="${classes}" data-field-id="${field.id}" tabindex="0" role="button" aria-label="Field ${field.id}">
+      <polygon points="${points}"></polygon>
+      <circle cx="${field.label[0]}" cy="${field.label[1]}" r="17"></circle>
+      <text x="${field.label[0]}" y="${field.label[1]}" text-anchor="middle" dominant-baseline="central">${field.id}</text>
+    </g>`;
+  }).join("");
+
+  const choose=(id)=>{
+    selectedMapFieldId=Number(id);
+    document.getElementById("field-map-selection").textContent=`Field ${selectedMapFieldId}`;
+    const useBtn=document.getElementById("field-map-use-btn");
+    if(useBtn) useBtn.disabled=false;
+    renderFieldMap();
+  };
+  svg.querySelectorAll(".map-field").forEach(el=>{
+    el.addEventListener("click",()=>choose(el.dataset.fieldId));
+    el.addEventListener("keydown",e=>{ if(e.key==="Enter" || e.key===" "){ e.preventDefault(); choose(el.dataset.fieldId); } });
+  });
+  const selection=document.getElementById("field-map-selection");
+  if(selection) selection.textContent=selectedMapFieldId ? `Field ${selectedMapFieldId}` : "None";
+  const useBtn=document.getElementById("field-map-use-btn");
+  if(useBtn) useBtn.disabled=!selectedMapFieldId;
+}
+
 function renderFields(){
+  renderFieldMap();
   document.getElementById("fields-table").innerHTML = state.fields.length ? state.fields.map((f,i)=>`
     <div class="data-row"><div class="data-row-main"><strong>${esc(f.name)} · ${esc(f.crop||"Unassigned")}</strong><small>${esc(f.state)} · Next: ${esc(f.next||"Not set")}</small></div><button class="mini delete delete-field" data-i="${i}">Delete</button></div>`).join("") : `<div class="empty">No land or fields recorded yet.</div>`;
   document.querySelectorAll(".delete-field").forEach(b=>b.addEventListener("click",()=>{state.fields.splice(Number(b.dataset.i),1); save();}));
@@ -407,6 +449,15 @@ document.getElementById("session-form").addEventListener("submit",e=>{
 document.getElementById("clear-done-btn").addEventListener("click",()=>{state.tasks=state.tasks.filter(t=>t.status!=="Done"); save();});
 document.getElementById("field-form").addEventListener("submit",e=>{
   e.preventDefault(); const d=Object.fromEntries(new FormData(e.target)); state.fields.push(d); e.target.reset(); save();
+});
+
+document.getElementById("field-map-use-btn")?.addEventListener("click",()=>{
+  if(!isAdmin || !selectedMapFieldId) return;
+  const form=document.getElementById("field-form");
+  if(!form) return;
+  form.name.value=`Field ${selectedMapFieldId}`;
+  form.name.focus();
+  form.scrollIntoView({behavior:"smooth",block:"center"});
 });
 
 document.getElementById("crop-current-month").addEventListener("change",e=>{

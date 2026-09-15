@@ -137,3 +137,7 @@ The old browser state remains cached in `localStorage` as an offline/emergency b
 ## v9 — editable mod list
 
 The Mods / DLC page now reads from `fs_mods` in Supabase. Public viewers can see the list. The authenticated farm admin can add and remove mods directly from the website, including category, stage gate, rule note and optional ModHub URL.
+
+## v10 — Moss Valley field overview
+
+The Fields tab now includes an interactive Moss Valley overview generated from the map's own field polygon data. It displays all 80 field definitions with their native field IDs. Selecting a field highlights it; signed-in admins can use the selection to prefill a `Field N` record. Existing field records named `Field N` are highlighted on the overview automatically.
